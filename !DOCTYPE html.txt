@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Happy 14th Birthday Mehek</title>
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Playfair+Display:ital,wght@0,400;0,600&family=Poppins:wght@600;700&display=swap" rel="stylesheet">
+    
+    <!-- Canvas Confetti Library -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+    <style>
+        /* Base Styles & Resets */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            text-transform: capitalize; /* Forces First Letter Capital */
+        }
+
+        body, html {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: #000;
+            font-family: 'Playfair Display', serif;
+            color: #fff;
+        }
+
+        /* Fonts */
+        .romantic-text { font-family: 'Great Vibes', cursive; }
+        .emotional-text { font-family: 'Playfair Display', serif; }
+        .cute-text { font-family: 'Poppins', sans-serif; font-weight: 700; }
+
+        /* Screens */
+        .screen {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 1.5s ease, background 2s ease;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .screen.active {
+            opacity: 1;
+            visibility: visible;
+            z-index: 10;
+        }
+
+        /* Backgrounds */
+        #intro-screen { background-color: #050505; }
+        #step1-screen { background-color: #050505; }
+        #step2-screen { background: linear-gradient(135deg, #fbc2eb 0%, #a6c1ee 100%); color: #333; }
+        #step2-screen.bright { background: linear-gradient(135deg, #ffd1ff 0%, #c3e0ff 100%); }
+
+        /* Mute Toggle */
+        #audio-toggle {
+            position: absolute;
+            top: 20px; right: 20px;
+            z-index: 100;
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            color: #fff;
+            padding: 10px;
+            border-radius: 50%;
+            cursor: pointer;
+            backdrop-filter: blur(5px);
+            transition: all 0.3s ease;
+            width: 45px; height: 45px;
+            display: flex; justify-content: center; align-items: center;
+            font-size: 20px;
+        }
+        #step2-screen.active ~ #audio-toggle { color: #333; border-color: #333; }
+
+        /* Buttons */
+        .btn {
+            margin-top: 30px;
+            padding: 12px 30px;
+            font-size: 1.1rem;
+            border: none;
+            border-radius: 30px;
+            background: linear-gradient(45deg, #ff758c, #ff7eb3);
+            color: white;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(255, 117, 140, 0.4);
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.5s ease;
+        }
+        .btn.show {
+            opacity: 1;
+            transform: translateY(0);
+            animation: pulse-glow 2s infinite;
+        }
+        .btn:hover { transform: scale(1.05); }
+        .btn-group { display: flex; gap: 15px; flex-wrap: wrap; justify-content: center; margin-top: 20px;}
+
+        /* Animations */
+        @keyframes pulse-glow {
+            0% { box-shadow: 0 0 10px rgba(255, 117, 140, 0.5); }
+            50% { box-shadow: 0 0 25px rgba(255, 117, 140, 0.8); }
+            100% { box-shadow: 0 0 10px rgba(255, 117, 140, 0.5); }
+        }
+
+        @keyframes float-sparkle {
+            0% { transform: translateY(0) scale(1); opacity: 0; }
+            50% { opacity: 1; }
+            100% { transform: translateY(-100px) scale(0.5); opacity: 0; }
+        }
+
+        /* Intro Screen Elements */
+        #intro-text {
+            font-size: 2.5rem;
+            text-shadow: 0 0 15px rgba(255, 215, 0, 0.5);
+            opacity: 0;
+            transition: opacity 2s ease;
+        }
+        
+        .sparkle {
+            position: absolute;
+            width: 4px; height: 4px;
+            background: gold;
+            border-radius: 50%;
+            box-shadow: 0 0 10px gold;
+            animation: float-sparkle 4s infinite linear;
+        }
+
+        /* Step 1 Elements */
+        .balloon-heart-container {
+            position: absolute;
+            width: 300px; height: 300px;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            transition: transform 3s cubic-bezier(0.25, 1, 0.5, 1);
+            z-index: 1;
+        }
+        
+        .balloon-heart-container.zoomed {
+            transform: translate(-50%, -50%) scale(1);
+        }
+
+        .balloon-heart-container.slide-right {
+            transform: translate(10%, -50%) scale(0.8);
+            filter: drop-shadow(0 0 30px rgba(255, 0, 50, 0.6));
+        }
+
+        @media (max-width: 600px) {
+            .balloon-heart-container.slide-right {
+                transform: translate(-20%, -30%) scale(0.6);
+                opacity: 0.4; /* So text can be read easily on mobile */
+            }
+        }
+
+        .svg-heart { width: 100%; height: 100%; }
+
+        .birthday-text-container {
+            position: relative;
+            z-index: 2;
+            width: 90%;
+            max-width: 600px;
+            text-align: left;
+            margin-right: auto;
+            margin-left: 5%;
+        }
+
+        @media (max-width: 600px) {
+            .birthday-text-container { text-align: center; margin-left: auto; }
+        }
+
+        .bday-heading {
+            font-size: 2.2rem;
+            color: #ff758c;
+            text-shadow: 0 0 10px rgba(255, 117, 140, 0.6);
+            margin-bottom: 20px;
+            opacity: 0;
+            transform: translateY(10px);
+            transition: opacity 1s, transform 1s;
+        }
+
+        .bday-line, .prop-line {
+            font-size: 1.2rem;
+            margin-bottom: 12px;
+            line-height: 1.5;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+            opacity: 0;
+            transform: translateY(10px);
+            transition: opacity 1s, transform 1s;
+        }
+
+        /* Step 2 Elements */
+        .proposal-container {
+            max-width: 600px;
+            z-index: 2;
+        }
+
+        .question-text {
+            font-size: 2rem;
+            color: #d10047;
+            margin: 30px 0;
+            opacity: 0;
+            text-shadow: 0 0 10px rgba(255,255,255,0.8);
+            transition: opacity 1s;
+        }
+
+        .funny-text {
+            font-size: 2.5rem;
+            color: #ff3366;
+            text-shadow: 0 4px 10px rgba(255, 51, 102, 0.3);
+            margin-bottom: 20px;
+            opacity: 0;
+            transition: opacity 1s;
+        }
+
+        .sub-funny-text {
+            font-size: 1.5rem;
+            color: #555;
+            margin-bottom: 30px;
+            opacity: 0;
+            transition: opacity 1s;
+        }
+
+        .floating-heart {
+            position: absolute;
+            font-size: 20px;
+            color: rgba(255, 117, 140, 0.6);
+            animation: float-sparkle 6s infinite ease-in;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Mute Toggle -->
+    <button id="audio-toggle">🔊</button>
+
+    <!-- Intro Screen -->
+    <div id="intro-screen" class="screen active">
+        <div id="intro-text" class="romantic-text">A Little Gift From Your Darling ❤️</div>
+        <button id="intro-btn" class="btn cute-text">Open Your Surprise ✨</button>
+    </div>
+
+    <!-- Step 1 Screen -->
+    <div id="step1-screen" class="screen">
+        <!-- Balloon Heart SVG -->
+        <div class="balloon-heart-container" id="giant-heart">
+            <svg class="svg-heart" viewBox="0 0 100 100">
+                <defs>
+                    <radialGradient id="balloonGrad" cx="30%" cy="30%" r="70%">
+                        <stop offset="0%" stop-color="#ff9999" />
+                        <stop offset="30%" stop-color="#ff3344" />
+                        <stop offset="100%" stop-color="#aa0011" />
+                    </radialGradient>
+                </defs>
+                <path d="M50 90 C 20 60, 0 40, 0 20 A 20 20 0 0 1 40 10 Q 50 20 60 10 A 20 20 0 0 1 100 20 C 100 40, 80 60, 50 90 Z" fill="url(#balloonGrad)"/>
+                <!-- Highlighting to look like balloons -->
+                <circle cx="25" cy="25" r="5" fill="rgba(255,255,255,0.4)" filter="blur(2px)"/>
+                <circle cx="75" cy="25" r="5" fill="rgba(255,255,255,0.4)" filter="blur(2px)"/>
+            </svg>
+        </div>
+
+        <div class="birthday-text-container">
+            <h1 class="bday-heading romantic-text" id="bday-head">Happy 14th Birthday My Beautiful Motiiii 🎂❤️</h1>
+            <div id="bday-lines" class="emotional-text">
+                <p class="bday-line">Motiiii, You Are The Most Precious Blessing In My Life 💖</p>
+                <p class="bday-line">Mehek, Your Smile Lights Up My Whole World ✨</p>
+                <p class="bday-line">Today Is Your Magical 14th Birthday 🌸</p>
+                <p class="bday-line">May Every Dream Of Yours Shine Brighter Each Year 🎀</p>
+                <p class="bday-line">You Deserve Endless Happiness And Success 💕</p>
+                <p class="bday-line">I Am Forever Lucky To Have You, My Motiiii ❤️</p>
+            </div>
+            <button id="step1-btn" class="btn cute-text">Click Here For Something From My Heart 💌</button>
+        </div>
+    </div>
+
+    <!-- Step 2 Screen -->
+    <div id="step2-screen" class="screen">
+        <div class="proposal-container" id="prop-container">
+            <div id="prop-lines" class="emotional-text">
+                <p class="prop-line">Puchki… From The Moment You Entered My Life, Everything Changed 💖</p>
+                <p class="prop-line">Your Laugh Is My Favorite Sound ✨</p>
+                <p class="prop-line">Your Eyes Hold My Whole Universe 🌸</p>
+                <p class="prop-line">My Feelings For You Are Pure And Real 💕</p>
+                <p class="prop-line">I Want Every Tomorrow With You 🎀</p>
+                <p class="prop-line">You Are My Happiness… My Future… My Puchki ❤️</p>
+            </div>
+            
+            <h2 class="question-text romantic-text" id="prop-question">Mehek, My Puchki… Will You Stay With Me Forever? 💍❤️</h2>
+            
+            <div class="btn-group" id="prop-btns">
+                <button class="btn cute-text" onclick="handleYesClick()">Yes, Always With You ❤️</button>
+                <button class="btn cute-text" onclick="handleYesClick()">Forever Yours 💕</button>
+            </div>
+        </div>
+
+        <div class="proposal-container hidden" id="funny-container" style="display: none;">
+            <h1 class="funny-text cute-text" id="babies-text">I Want 24 Babies 😜👶</h1>
+            <h3 class="sub-funny-text cute-text" id="sub-funny-text" style="display:none;"></h3>
+            
+            <div class="btn-group" id="funny-btns">
+                <button class="btn cute-text" onclick="handleOkClick()">Ok Janu 😚</button>
+                <button class="btn cute-text" id="no-btn" onclick="handleNoClick()">No Babe 🤫</button>
+            </div>
+            
+            <button id="replay-btn" class="btn cute-text" style="display:none;" onclick="location.reload()">Replay Our Love Story ❤️</button>
+        </div>
+    </div>
+
+    <script>
+        /* --- Audio System (Web Audio API for Soft Bubbles) --- */
+        let audioCtx;
+        let isMuted = false;
+        let ambientOsc;
+
+        const toggleBtn = document.getElementById('audio-toggle');
+        toggleBtn.addEventListener('click', () => {
+            isMuted = !isMuted;
+            toggleBtn.innerText = isMuted ? '🔇' : '🔊';
+            if(ambientOsc && isMuted) {
+                ambientOsc.gainNode.gain.value = 0;
+            } else if (ambientOsc && !isMuted) {
+                ambientOsc.gainNode.gain.value = 0.05;
+            }
+        });
+
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                startAmbientBubble();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        }
+
+        // Soft tiny pop sound
+        function playBubblePop(freq1 = 400, freq2 = 600, duration = 0.15, vol = 0.3) {
+            if (isMuted || !audioCtx) return;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(freq1, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(freq2, audioCtx.currentTime + 0.1);
+            
+            gain.gain.setValueAtTime(0, audioCtx.currentTime);
+            gain.gain.linearRampToValueAtTime(vol, audioCtx.currentTime + 0.02);
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+            
+            osc.start(audioCtx.currentTime);
+            osc.stop(audioCtx.currentTime + duration);
+        }
+
+        // Soft ambient loop
+        function startAmbientBubble() {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.type = 'sine';
+            osc.frequency.value = 150;
+            gain.gain.value = isMuted ? 0 : 0.05;
+            osc.start();
+            ambientOsc = { osc, gainNode: gain };
+
+            // Occasional background random bubbles
+            setInterval(() => {
+                if(!isMuted) playBubblePop(200, 300, 0.2, 0.05);
+            }, 3000);
+        }
+
+        function playCelebrateSound() {
+            playBubblePop(500, 800, 0.3, 0.5);
+            setTimeout(() => playBubblePop(600, 900, 0.3, 0.5), 150);
+            setTimeout(() => playBubblePop(700, 1000, 0.3, 0.5), 300);
+        }
+
+        function playPartyPop() {
+            // Noise burst for balloon pop
+            if(isMuted || !audioCtx) return;
+            const bufferSize = audioCtx.sampleRate * 0.5;
+            const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+            const data = buffer.getChannelData(0);
+            for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
+
+            const noise = audioCtx.createBufferSource();
+            noise.buffer = buffer;
+            const filter = audioCtx.createBiquadFilter();
+            filter.type = 'lowpass';
+            filter.frequency.value = 1000;
+            
+            const gain = audioCtx.createGain();
+            noise.connect(filter);
+            filter.connect(gain);
+            gain.connect(audioCtx.destination);
+            
+            gain.gain.setValueAtTime(0.5, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+            
+            noise.start(audioCtx.currentTime);
+            playCelebrateSound();
+        }
+
+        /* --- Animations & Logic --- */
+        const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+        // Intro Sparkles
+        function createSparkles() {
+            const intro = document.getElementById('intro-screen');
+            for(let i=0; i<20; i++) {
+                let spark = document.createElement('div');
+                spark.className = 'sparkle';
+                spark.style.left = Math.random() * 100 + 'vw';
+                spark.style.top = Math.random() * 100 + 'vh';
+                spark.style.animationDelay = Math.random() * 4 + 's';
+                intro.appendChild(spark);
+            }
+        }
+        createSparkles();
+
+        // Intro Sequence
+        window.onload = async () => {
+            const introText = document.getElementById('intro-text');
+            const introBtn = document.getElementById('intro-btn');
+            
+            await sleep(1000);
+            introText.style.opacity = 1;
+            
+            await sleep(3500);
+            introText.style.opacity = 0;
+            
+            await sleep(2000);
+            introBtn.classList.add('show');
+        };
+
+        document.getElementById('intro-btn').addEventListener('click', async () => {
+            initAudio();
+            playBubblePop();
+            document.getElementById('intro-screen').classList.remove('active');
+            await sleep(1000);
+            startStep1();
+        });
+
+        // Step 1
+        async function startStep1() {
+            const step1 = document.getElementById('step1-screen');
+            step1.classList.add('active');
+            
+            const heart = document.getElementById('giant-heart');
+            await sleep(500);
+            playBubblePop(200, 300, 0.5, 0.5); // Deep pop
+            heart.classList.add('zoomed');
+            
+            await sleep(3000);
+            heart.classList.add('slide-right');
+            
+            await sleep(1000);
+            const heading = document.getElementById('bday-head');
+            heading.style.opacity = 1;
+            heading.style.transform = 'translateY(0)';
+            playBubblePop();
+
+            const lines = document.querySelectorAll('.bday-line');
+            for (let line of lines) {
+                await sleep(1500);
+                line.style.opacity = 1;
+                line.style.transform = 'translateY(0)';
+                playBubblePop();
+            }
+
+            await sleep(1500);
+            document.getElementById('step1-btn').classList.add('show');
+        }
+
+        document.getElementById('step1-btn').addEventListener('click', async () => {
+            playBubblePop();
+            document.getElementById('step1-screen').classList.remove('active');
+            await sleep(1000);
+            startStep2();
+        });
+
+        // Step 2
+        function createFloatingHearts() {
+            const step2 = document.getElementById('step2-screen');
+            for(let i=0; i<15; i++) {
+                let h = document.createElement('div');
+                h.className = 'floating-heart';
+                h.innerText = '❤️';
+                h.style.left = Math.random() * 100 + 'vw';
+                h.style.top = (Math.random() * 50 + 50) + 'vh';
+                h.style.animationDelay = Math.random() * 5 + 's';
+                step2.appendChild(h);
+            }
+        }
+
+        async function startStep2() {
+            const step2 = document.getElementById('step2-screen');
+            step2.classList.add('active');
+            createFloatingHearts();
+
+            await sleep(1000);
+            const lines = document.querySelectorAll('.prop-line');
+            for (let line of lines) {
+                await sleep(1500);
+                line.style.opacity = 1;
+                line.style.transform = 'translateY(0)';
+                playBubblePop();
+            }
+
+            await sleep(1500);
+            document.getElementById('prop-question').style.opacity = 1;
+            playBubblePop(400, 500);
+
+            await sleep(1000);
+            const btns = document.querySelectorAll('#prop-btns .btn');
+            btns.forEach(btn => btn.classList.add('show'));
+        }
+
+        // Funny Interactions
+        async function handleYesClick() {
+            playCelebrateSound();
+            confetti({ particleCount: 50, spread: 60, origin: { y: 0.6 }, colors: ['#ff758c', '#ffeb3b', '#ff3366'] });
+            
+            document.getElementById('step2-screen').classList.add('bright');
+            document.getElementById('prop-container').style.display = 'none';
+            
+            const funnyContainer = document.getElementById('funny-container');
+            funnyContainer.style.display = 'block';
+            
+            await sleep(500);
+            document.getElementById('babies-text').style.opacity = 1;
+            playBubblePop();
+
+            await sleep(1000);
+            const btns = document.querySelectorAll('#funny-btns .btn');
+            btns.forEach(btn => btn.classList.add('show'));
+        }
+
+        async function handleNoClick() {
+            playBubblePop(600, 400); // reverse pop
+            const noBtn = document.getElementById('no-btn');
+            noBtn.style.display = 'none';
+
+            const subText = document.getElementById('sub-funny-text');
+            subText.innerText = "Are You Sure Puchki? Think Again 😏";
+            subText.style.display = 'block';
+            
+            await sleep(100);
+            subText.style.opacity = 1;
+        }
+
+        async function handleOkClick() {
+            playPartyPop();
+            
+            // Big Confetti
+            var duration = 3 * 1000;
+            var end = Date.now() + duration;
+
+            (function frame() {
+                confetti({ particleCount: 5, angle: 60, spread: 55, origin: { x: 0 }, colors: ['#ff758c', '#ffeb3b', '#ff3366'] });
+                confetti({ particleCount: 5, angle: 120, spread: 55, origin: { x: 1 }, colors: ['#ff758c', '#ffeb3b', '#ff3366'] });
+                if (Date.now() < end) requestAnimationFrame(frame);
+            }());
+
+            document.getElementById('funny-btns').style.display = 'none';
+            document.getElementById('sub-funny-text').style.display = 'none';
+            
+            const mainText = document.getElementById('babies-text');
+            mainText.style.opacity = 0;
+            
+            await sleep(500);
+            mainText.innerText = "Congrats 🎉";
+            mainText.style.opacity = 1;
+            
+            await sleep(1500);
+            const subText = document.getElementById('sub-funny-text');
+            subText.innerText = "Now You Are Ready To Become 24 Babies Mother 😁";
+            subText.style.display = 'block';
+            subText.style.opacity = 1;
+            playBubblePop();
+
+            await sleep(2000);
+            const replayBtn = document.getElementById('replay-btn');
+            replayBtn.style.display = 'block';
+            setTimeout(() => replayBtn.classList.add('show'), 100);
+        }
+    </script>
+</body>
+</html>
